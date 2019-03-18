@@ -5,6 +5,50 @@ from __future__ import absolute_import
 from __future__ import division
 
 from flask import Flask, request
+from backend import db
+import json
+
+
+class User(db.Model):
+    __tablename__ = 'user'
+    uid = db.Column(db.Integer, autoincrement=True,
+                    nullable=False, primary_key=True)
+    name = db.Column(db.String(255), nullable=False)
+    identity = db.Column(db.String(255), nullable=False)
+    phone = db.Column(db.String(255), nullable=False)
+    price = db.Column(db.String(255), nullable=False)
+    num = db.Column(db.String(45), nullable=False)
+    status = db.Column(db.Integer, nullable=False)
+    seats_time = db.Column(db.String(255), nullable=False)
+
+    def __repr__(self):
+        return '<User %r,%r>' % (self.name, self.phone)
+
+    def get_info(self):
+        dic = {}
+        dic['name'] = self.name
+        dic['identity'] = self.identity
+        dic['price'] = self.price
+        dic['num'] = self.num
+        dic['status'] = self.status
+        dic['seatsTime'] = self.seats_time
+
+        return dic
+
+
+class Seat(db.Model):
+    __tablename__ = 'seat'
+    sid = db.Column(db.Integer, autoincrement=True,
+                    nullable=False, primary_key=True)
+    price = db.Column(db.String(255), nullable=False)
+    area = db.Column(db.String(255), nullable=False)
+    row = db.Column(db.String(255), nullable=False)
+    seat = db.Column(db.String(255), nullable=False)
+    occupied = db.Column(db.Integer, nullable=False)
+    userid = db.Column(db.Integer, nullable=False)
+
+    def __repr__(self):
+        return '<Seat %r,%r,%r>' % (self.area, self.row, self.seat)
 
 
 def queryTicketInfoByName(name):
@@ -17,14 +61,21 @@ def queryTicketInfoByName(name):
         票务信息，如果没有则返回 None 示例：
 
         [{'name': '吴宣仪',
-         'idNumber': '531531531531531531',
+         'identity': '531531531531531531',
          'price': '1680',
          'num': 4,
          'status': 0    # 0 表示未抽票, 1 表示已抽票
          'seatsTime'
         }]
     """
-    pass
+    users = User.query.filter_by(name=name).all()
+    if users:
+        infos = []
+        for user in users:
+            infos.append(user.get_info())
+        return json.dumps(infos, ensure_ascii=False)
+    else:
+        return None
 
 
 def queryTicketInfoByIdNumber(idNumber):
@@ -42,7 +93,14 @@ def queryTicketInfoByIdNumber(idNumber):
              'num': 4
             }]
         """
-    pass
+    users = User.query.filter_by(identity=idNumber).all()
+    if users:
+        infos = []
+        for user in users:
+            infos.append(user.get_info())
+        return json.dumps(infos, ensure_ascii=False)
+    else:
+        return None
 
 
 def querySeatsByTimeSpan(start, end):
@@ -171,3 +229,7 @@ def queryTicketInfoByStatus(status):
             }]
         """
     pass
+
+
+if __name__ == '__main__':
+    print(User.query.all())
