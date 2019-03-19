@@ -3,7 +3,7 @@
 # @Author: Jingrou Wu
 # @Date:   2019-03-18 20:03:06
 # @Last Modified by:   Jingrou Wu
-# @Last Modified time: 2019-03-18 22:49:06
+# @Last Modified time: 2019-03-19 18:13:08
 
 """
 
@@ -75,7 +75,7 @@ def forge_seat(count):
             row=choice(list(range(1, 50))),
             seat=choice(list(range(1, 50))),
             occupied=choice([0, 1]),
-            userid=choice(list(range(0, 20)))
+            uid=choice(list(range(0, 20)))
         )
         db.session.add(seat)
 
