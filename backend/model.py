@@ -8,8 +8,16 @@ from flask import Flask, request
 from backend import db
 import json
 
+"""
+
+数据库相关对象和操作的定义
+
+"""
+
 
 class User(db.Model):
+    """定义user表对象和相关函数"""
+
     __tablename__ = 'user'
     uid = db.Column(db.Integer, autoincrement=True,
                     nullable=False, primary_key=True)
@@ -22,9 +30,10 @@ class User(db.Model):
     seats_time = db.Column(db.String(255), nullable=False)
 
     def __repr__(self):
-        return '<User %r,%r>' % (self.name, self.phone)
+        return '<User %r,%r,%r>' % (self.uid, self.name, self.identity)
 
     def get_info(self):
+        """ 返回某一条记录的相关信息，用于查询票务信息 """
         dic = {}
         dic['name'] = self.name
         dic['identity'] = self.identity
@@ -37,6 +46,8 @@ class User(db.Model):
 
 
 class Seat(db.Model):
+    """ 定义了seat表对象和相关函数 """
+
     __tablename__ = 'seat'
     sid = db.Column(db.Integer, autoincrement=True,
                     nullable=False, primary_key=True)
@@ -45,10 +56,59 @@ class Seat(db.Model):
     row = db.Column(db.String(255), nullable=False)
     seat = db.Column(db.String(255), nullable=False)
     occupied = db.Column(db.Integer, nullable=False)
-    userid = db.Column(db.Integer, nullable=False)
+    uid = db.Column(db.Integer, nullable=False)
 
     def __repr__(self):
         return '<Seat %r,%r,%r>' % (self.area, self.row, self.seat)
+
+    def get_info(self):
+        """ 返回某一条记录的相关信息，用于查询抽票结果信息 """
+        dic = {}
+        user = User.query.filter_by(uid=self.uid).first()
+        dic['name'] = user.name
+        dic['idNumber'] = user.identity
+        dic['price'] = self.price
+        dic['area'] = self.area
+        dic['row'] = self.row
+        dic['seat'] = self.seat
+
+        return dic
+
+
+def getTicketInfo(users):
+    """ 从查询结果中返回所需票务信息 """
+
+    if users:
+        infos = []
+        for user in users:
+            infos.append(user.get_info())
+        return json.dumps(infos, ensure_ascii=False)
+    else:
+        return None
+
+
+def getSeatInfoFromUser(users):
+    """ 从用户查询结果中返回所需抽票结果信息 """
+
+    """ 如果用户信息存在则继续查询座位信息，否则返回None """
+    if users:
+        infos = []  # 用于记录抽票结果的列表
+
+        """ 对用户信息查询结果进行遍历，在表seat中查询相关信息 """
+        for user in users:
+            uid = user.uid
+            """ 注：考虑seat只有被抽取后才会改变uid的值，所以未加入occupied列值查询 """
+            seats = Seat.query.filter_by(uid=uid).all()
+            for seat in seats:
+                infos.append(seat.get_info())
+    else:
+        return None
+
+    """ 如果用户存在相关已抽票座位信息则返回对应值，否则返回None """
+    if infos:
+        return json.dumps(infos, ensure_ascii=False)
+    else:
+        return None
 
 
 def queryTicketInfoByName(name):
@@ -68,14 +128,8 @@ def queryTicketInfoByName(name):
          'seatsTime'
         }]
     """
-    users = User.query.filter_by(name=name).all()
-    if users:
-        infos = []
-        for user in users:
-            infos.append(user.get_info())
-        return json.dumps(infos, ensure_ascii=False)
-    else:
-        return None
+    users = User.query.filter_by(name=name).all()   # 根据姓名查询用户信息
+    return getTicketInfo(users)
 
 
 def queryTicketInfoByIdNumber(idNumber):
@@ -93,14 +147,8 @@ def queryTicketInfoByIdNumber(idNumber):
              'num': 4
             }]
         """
-    users = User.query.filter_by(identity=idNumber).all()
-    if users:
-        infos = []
-        for user in users:
-            infos.append(user.get_info())
-        return json.dumps(infos, ensure_ascii=False)
-    else:
-        return None
+    users = User.query.filter_by(identity=idNumber).all()   # 根据身份证号查询用户信息
+    return getTicketInfo(users)
 
 
 def querySeatsByTimeSpan(start, end):
@@ -127,7 +175,9 @@ def querySeatsByTimeSpan(start, end):
              'seat': '5'
             }]
         """
-    pass
+    users = User.query.filter(User.seats_time >= start,
+                              User.seats_time <= end).all()  # 根据抽票时间段查询用户信息
+    return getSeatInfoFromUser(users)
 
 
 def querySeatsByIdNumber(idNumber):
@@ -153,7 +203,9 @@ def querySeatsByIdNumber(idNumber):
              'seat': '5'
             }]
         """
-    pass
+
+    users = User.query.filter_by(identity=idNumber).all()  # 根据身份证号查询用户信息
+    return getSeatInfoFromUser(users)
 
 
 def querySeatsByName(name):
@@ -179,7 +231,8 @@ def querySeatsByName(name):
              'seat': '5'
             }]
         """
-    pass
+    users = User.query.filter_by(name=name).all()  # 根据姓名查询用户信息
+    return getSeatInfoFromUser(users)
 
 
 def queryTicketInfoBySeats(price, area, row, seat):
