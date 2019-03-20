@@ -3,7 +3,7 @@
 # @Author: Jingrou Wu
 # @Date:   2019-03-18 20:03:06
 # @Last Modified by:   Jingrou Wu
-# @Last Modified time: 2019-03-19 18:20:43
+# @Last Modified time: 2019-03-20 14:16:23
 
 """
 
@@ -45,7 +45,7 @@ def forge_user(count):
             price=choice([380, 480, 680, 980, 1380, 1680]),
             num=choice(list(range(1, 10))),
             status=choice([0, 1]),
-            seats_time=fake.date_time_this_year()
+            seats_time=fake.unix_time()
         )
         db.session.add(user)
 
@@ -115,7 +115,7 @@ def forge(count):
             price=choice([380, 480, 680, 980, 1380, 1680]),
             num=choice(list(range(1, 10))),
             status=choice([0, 1]),
-            seats_time=fake.date_time_this_year()
+            seats_time=fake.unix_time()
         )
         db.session.add(user)
 
