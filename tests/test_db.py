@@ -3,7 +3,7 @@
 # @Author: Jingrou Wu
 # @Date:   2019-03-18 19:55:02
 # @Last Modified by:   Jingrou Wu
-# @Last Modified time: 2019-03-20 00:53:47
+# @Last Modified time: 2019-03-20 14:28:25
 
 """
 
@@ -73,16 +73,17 @@ class DbTestCase(unittest.TestCase):
         users = User.query.all()
         user = choice(users)
         print(user.seats_time)
-        result = querySeatsByTimeSpan(user.seats_time, user.seats_time)
+        result = querySeatsByTimeSpan(
+            (int)(user.seats_time) - 10, (int)(user.seats_time) + 10)   # 存在抽票结果
         print(result)
         self.assertIsNotNone(result)
-        result = querySeatsByTimeSpan('199912120300', '199912121203')
+        result = querySeatsByTimeSpan(0, 1)     # 不存在抽票结果
         self.assertIsNone(result)
 
     def test_seat_by_idNumber(self):
         """ 测试接口querySeatsByIdNumber """
 
-        result = querySeatsByIdNumber('110105194502177537')     # 存在抽票结果
+        result = querySeatsByIdNumber('620524196411254752')     # 存在抽票结果
         print(result)
         self.assertIsNotNone(result)
         result = querySeatsByIdNumber('440229199804084710')    # 不存在抽票结果
